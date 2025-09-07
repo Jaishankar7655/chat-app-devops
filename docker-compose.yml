@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  # Backend Service
+  backend:
+    build:
+      context: ./backend       # Path to your backend Dockerfile
+      dockerfile: Dockerfile   # Make sure backend Dockerfile is here
+    container_name: backend
+    env_file:
+      - .env
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend      # Path to your frontend Dockerfile
+      dockerfile: Dockerfile   # Make sure frontend Dockerfile is here
+    container_name: frontend
+    ports:
+      - "3000:80"               # Nginx serves on port 80 inside container
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # MongoDB Service
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: dbname
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+# Volumes for persistence
+volumes:
+  mongo-data:
+
+# Shared network
+networks:
+  app-network:
+    driver: bridge
